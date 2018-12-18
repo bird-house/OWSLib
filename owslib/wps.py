@@ -121,6 +121,7 @@ try:                    # Python 3
 except ImportError:     # Python 2
     from urlparse import urlparse
 
+import six
 # namespace definition
 n = Namespaces()
 
@@ -160,7 +161,7 @@ def is_reference(val):
     """
     try:
         parsed = urlparse(val)
-        is_ref = parsed.scheme != ''
+        is_ref = bool(parsed.scheme)
     except Exception:
         is_ref = False
     return is_ref
@@ -296,10 +297,12 @@ class WebProcessingService(object):
         retrieve the result.
 
         :param str identifier: the requested process identifier
-        :param inputs: list of process inputs as (key, value) tuples (where value is either a string for LiteralData, or
-                an object for ComplexData)
-        :param output: optional identifier for process output reference (if not provided, output will be
-                embedded in the response)
+        :param inputs: list of process inputs as (input_identifier, value) tuples (where value is either a string
+                for LiteralData, or an object for ComplexData).
+        :param output: optional list of process outputs as tuples (output_identifier, as_ref, mime_type).
+                `as_ref` can be True (as reference),
+                False (embedded in response) or None (use service default).
+                `mime_type` should be text or None (use service default)
         :param mode: execution mode: SYNC, ASYNC or AUTO. Default: ASYNC
         :param lineage: if lineage is "true", the Execute operation response shall include the DataInputs and
                  OutputDefinitions elements.
@@ -598,8 +601,9 @@ class WPSExecution():
               and the object must contain a 'getXml()' method that returns an XML infoset to be included in
               the WPS request
         :param output: array of outputs which should be returned:
-                expressed as tuples (key, as_ref) where key is the output identifier and as_ref is True
+                expressed as tuples (key, as_ref, mime_mype) where key is the output identifier and as_ref is True
                 if output should be returned as reference.
+                as_ref and mimeType may be null for using server's default value
         :param mode: execution mode: SYNC, ASYNC or AUTO.
         :param lineage: if lineage is "true", the Execute operation response shall include the DataInputs and
                  OutputDefinitions elements.
@@ -687,7 +691,7 @@ class WPSExecution():
 
         # <wps:ResponseForm>
         #   <wps:ResponseDocument storeExecuteResponse="true" status="true" lineage="false">
-        #     <wps:Output asReference="true">
+        #     <wps:Output asReference="true" mimeType="application/json">
         #       <ows:Identifier>OUTPUT</ows:Identifier>
         #     </wps:Output>
         #   </wps:ResponseDocument>
@@ -703,24 +707,32 @@ class WPSExecution():
                         'lineage': str(lineage).lower()})
             # keeping backward compability of output parameter
             if isinstance(output, str):
-                self._add_output(
-                    responseDocumentElement, output, asReference=_async)
+                self._add_output(responseDocumentElement, output)
             elif isinstance(output, list):
-                for (identifier, as_reference) in output:
+                for ouputTuple in output:
+                    # tuple (identifier, as_reference) for backward compatibility
+                    if(len(ouputTuple) == 2):
+                        (identifier, as_reference) = ouputTuple
+                        mime_type = None
+                    else:
+                        (identifier, as_reference, mime_type) = ouputTuple
                     self._add_output(
-                        responseDocumentElement, identifier, asReference=as_reference and _async)
+                        responseDocumentElement, identifier, asReference=as_reference, mimeType=mime_type)
             else:
                 raise Exception(
                     'output parameter is neither string nor list. output=%s' % output)
         return root
 
-    def _add_output(self, element, identifier, asReference=False):
-        outputElement = etree.SubElement(
-            element, nspath_eval('wps:Output', namespaces),
-            attrib={'asReference': str(asReference).lower()})
+    def _add_output(self, element, identifier, asReference=None, mimeType=None):
+        output_element = etree.SubElement(
+            element, nspath_eval('wps:Output', namespaces))
+        if isinstance(mimeType, str):
+            output_element.attrib['mimeType'] = mimeType
+        if isinstance(asReference, bool):
+            output_element.attrib['asReference'] = str(asReference).lower()
         # outputIdentifierElement
         etree.SubElement(
-            outputElement, nspath_eval('ows:Identifier', namespaces)).text = identifier
+            output_element, nspath_eval('ows:Identifier', namespaces)).text = identifier
 
     # wait for 60 seconds by default
     def checkStatus(self, url=None, response=None, sleepSecs=60):
@@ -1326,7 +1338,7 @@ class Output(InputOutput):
                 if literalDataElement.text is not None and literalDataElement.text.strip() is not '':
                     self.data.append(literalDataElement.text.strip())
             bboxDataElement = dataElement.find(nspath('BoundingBox', ns=namespaces['ows']))
-            if not bboxDataElement:
+            if bboxDataElement is not None:
                 # TODO: just a workaround for data-inputs in lineage
                 bboxDataElement = dataElement.find(nspath('BoundingBoxData', ns=namespaces['wps']))
             if bboxDataElement is not None:
