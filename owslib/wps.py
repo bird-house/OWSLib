@@ -1328,7 +1328,7 @@ class Output(InputOutput):
                 self.dataType = "ComplexData"
                 self.mimeType = complexDataElement.get('mimeType')
                 if complexDataElement.text is not None and complexDataElement.text.strip() is not '':
-                    self.data.append(complexDataElement.text.strip())
+                    self.data.append(complexDataElement.text)
                 for child in complexDataElement:
                     self.data.append(etree.tostring(child))
             literalDataElement = dataElement.find(
