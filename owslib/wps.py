@@ -271,7 +271,9 @@ class WebProcessingService(object):
     def describeprocess(self, identifier, xml=None):
         """
         Requests a process document from a WPS service and populates the process metadata.
-        Returns the process object.
+        Returns the process object or a list of process objects.
+
+        :param str identifier: The process id. If `all`, return a list of all processes available.
         """
 
         # read capabilities document
@@ -288,7 +290,12 @@ class WebProcessingService(object):
         log.info(element_to_string(rootElement))
 
         # build metadata objects
-        return self._parseProcessMetadata(rootElement)
+        processes = self._parseProcessMetadata(rootElement)
+
+        if identifier == 'all':
+            return processes
+        else:
+            return processes[0]
 
     def execute(self, identifier, inputs, output=None, mode=ASYNC, lineage=False, request=None, response=None):
         """
@@ -344,27 +351,29 @@ class WebProcessingService(object):
         raise KeyError("No operation named %s" % name)
 
     def _parseProcessMetadata(self, rootElement):
-        """
-        Method to parse a <ProcessDescriptions> XML element and returned the constructed Process object
-        """
+        """Return a list of Process objects parsed from a <ProcessDescriptions> XML element."""
 
-        processDescriptionElement = rootElement.find('ProcessDescription')
-        process = Process(processDescriptionElement, verbose=self.verbose)
+        processDescriptionElements = rootElement.findall('ProcessDescription')
+        processes = []
+        for processDescriptionElement in processDescriptionElements:
+            process = Process(processDescriptionElement, verbose=self.verbose)
 
-        # override existing processes in object metadata, if existing already
-        found = False
-        for n, p in enumerate(self.processes):
-            if p.identifier == process.identifier:
-                self.processes[n] = process
-                found = True
-        # otherwise add it
-        if not found:
-            self.processes.append(process)
+            # override existing processes in object metadata, if existing already
+            found = False
+            for n, p in enumerate(self.processes):
+                if p.identifier == process.identifier:
+                    self.processes[n] = process
+                    found = True
+            # otherwise add it
+            if not found:
+                self.processes.append(process)
 
-        return process
+            processes.append(process)
+
+        return processes
 
     def _parseCapabilitiesMetadata(self, root):
-        ''' Sets up capabilities metadata objects '''
+        """Set up capabilities metadata objects."""
 
         # reset metdata
         self.operations = []
@@ -428,7 +437,6 @@ class WebProcessingService(object):
 
 
 class WPSReader(object):
-
     """
     Superclass for reading a WPS document into a lxml.etree infoset.
     """
@@ -553,7 +561,7 @@ class WPSExecuteReader(WPSReader):
                                  headers=headers, verify=verify, cert=cert)
 
 
-class WPSExecution():
+class WPSExecution(object):
 
     """
     Class that represents a single WPS process executed on a remote WPS service.
@@ -738,7 +746,7 @@ class WPSExecution():
     def checkStatus(self, url=None, response=None, sleepSecs=60):
         """
         Method to check the status of a job execution.
-        In the process, this method will upadte the object 'response' attribute.
+        In the process, this method will update the object 'response' attribute.
 
         :param str url: optional 'statusLocation' URL retrieved from a previous WPS Execute response document.
              If not provided, the current 'statusLocation' URL will be used.
@@ -1606,8 +1614,14 @@ class ComplexDataInput(IComplexDataInput, ComplexData):
         """
            <wps:Reference xlink:href="http://somewhere/test.xml"/>
         """
-        refElement = etree.Element(nspath_eval('wps:Reference', namespaces),
-                                   attrib={nspath_eval("xlink:href", namespaces): self.value})
+        attrib = {nspath_eval("xlink:href", namespaces): self.value}
+        if self.encoding:
+            attrib['encoding'] = self.encoding
+        if self.schema:
+            attrib['schema'] = self.schema
+        if self.mimeType:
+            attrib['mimeType'] = self.mimeType
+        refElement = etree.Element(nspath_eval('wps:Reference', namespaces), attrib)
         return refElement
 
     def complexDataRaw(self):
