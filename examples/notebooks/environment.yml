@@ -1,0 +1,17 @@
+# conda env create -f environment.yml
+name: owslib
+channels:
+  - conda-forge
+dependencies:
+  # notebook
+  - jupyterlab
+  - ipywidgets
+  - nodejs
+  # owslib
+  - python-dateutil
+  - pytz
+  - requests
+  - pyproj
+  - lxml
+  - pip:
+    - -e git+https://github.com/bird-house/OWSLib.git@esgfwps#egg=owslib
