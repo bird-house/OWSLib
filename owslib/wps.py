@@ -219,7 +219,7 @@ class WebProcessingService(object):
     """
 
     def __init__(self, url, version=WPS_DEFAULT_VERSION, username=None, password=None, verbose=False, skip_caps=False,
-                 headers=None, verify=True, cert=None):
+                 headers=None, verify=True, cert=None, api_key=False):
         """
         Initialization method resets the object status.
         By default it will execute a GetCapabilities invocation to the remote service,
@@ -235,6 +235,7 @@ class WebProcessingService(object):
         self.headers = headers
         self.verify = verify
         self.cert = cert
+        self.api_key = api_key
 
         # fields populated by method invocations
         self._capabilities = None
@@ -261,7 +262,7 @@ class WebProcessingService(object):
         else:
             self._capabilities = reader.readFromUrl(
                 self.url, username=self.username, password=self.password,
-                headers=self.headers, verify=self.verify, cert=self.cert)
+                headers=self.headers, verify=self.verify, cert=self.cert, api_key=self.api_key)
 
         log.debug(element_to_string(self._capabilities))
 
@@ -446,7 +447,7 @@ class WPSReader(object):
         self.verbose = verbose
 
     def _readFromUrl(self, url, data, method='Get', username=None, password=None,
-                     headers=None, verify=True, cert=None):
+                     headers=None, verify=True, cert=None, api_key=None):
         """
         Method to get and parse a WPS document, returning an elementtree instance.
         :param str url: WPS service base url.
@@ -464,13 +465,15 @@ class WPSReader(object):
             spliturl = request_url.split('?')
             u = openURL(spliturl[0], spliturl[
                         1], method='Get', username=username, password=password,
-                        headers=headers, verify=verify, cert=cert)
+                        headers=headers, verify=verify, cert=cert,
+                        api_key=api_key)
             return etree.fromstring(u.read())
 
         elif method == 'Post':
             u = openURL(url, data, method='Post',
                         username=username, password=password,
-                        headers=headers, verify=verify, cert=cert)
+                        headers=headers, verify=verify, cert=cert,
+                        api_key=api_key)
             return etree.fromstring(u.read())
 
         else:
@@ -499,7 +502,7 @@ class WPSCapabilitiesReader(WPSReader):
             version=version, verbose=verbose)
 
     def readFromUrl(self, url, username=None, password=None,
-                    headers=None, verify=True, cert=None):
+                    headers=None, verify=True, cert=None, api_key=None):
         """
         Method to get and parse a WPS capabilities document, returning an elementtree instance.
 
@@ -508,10 +511,13 @@ class WPSCapabilitiesReader(WPSReader):
         :param str password: optional user credentials
         """
         return self._readFromUrl(url,
-                                 {'service': 'WPS', 'request':
-                                     'GetCapabilities', 'version': self.version},
+                                 {'service': 'WPS',
+                                  'request': 'GetCapabilities',
+                                  'version': self.version,
+                                  'api_key': api_key},
                                  username=username, password=password,
-                                 headers=headers, verify=verify, cert=cert)
+                                 headers=headers, verify=verify, cert=cert,
+                                 )
 
 
 class WPSDescribeProcessReader(WPSReader):
@@ -1645,6 +1651,14 @@ class ComplexDataInput(IComplexDataInput, ComplexData):
             dataElement, nspath_eval('wps:ComplexData', namespaces), attrib=attrib)
         complexDataElement.text = self.value
         return dataElement
+
+
+class Variable(ComplexDataInput):
+    def __init__(self, id=None, uri=None):
+        super(Variable, self).__init__(
+            value="{{'id': {}, 'uri': {}}}".format(id, uri),
+            mimeType="application/json", encoding=None, schema=None)
+        pass
 
 
 class FeatureCollection(IComplexDataInput):
