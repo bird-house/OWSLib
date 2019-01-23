@@ -13,7 +13,7 @@ def test_variable():
     assert variable.id == 'tas|test'
     assert variable.json['id'] == 'tas|test'
     assert variable.json['uri'] == 'http://data.demo/tas.nc'
-    assert variable.value == '{"uri": "http://data.demo/tas.nc", "var_name": "tas", "id": "tas|test"}'
+    assert variable.value == '{"name": "test", "uri": "http://data.demo/tas.nc", "var_name": "tas", "id": "tas|test"}'
     assert variable.__repr__() == "Variable(name='test', uri='http://data.demo/tas.nc', var_name='tas')"
 
 
@@ -29,6 +29,10 @@ def test_variable_from_json():
 
 def test_dimension():
     dimension = Dimension('time', 227, 806)
+    assert dimension.name == 'time'
+    assert dimension.start == 227
+    assert dimension.end == 806
+    assert dimension.json == {'end': 806, 'name': 'time', 'start': 227, 'step': 1}
     dimension = Dimension('lat', 0, 90)
     dimension = Dimension('lon', 180, 360)
 

@@ -15,12 +15,12 @@ class Parameter(ComplexDataInput):
             mimeType="application/json",
             encoding=None,
             schema=None)
-        self._name = name or uuid1().hex
         self._data = {}
+        self._data['name'] = name or uuid1().hex
 
     @property
     def name(self):
-        return self._name
+        return self._data['name']
 
     @property
     def json(self):
@@ -81,47 +81,21 @@ class Variable(Parameter):
 class Dimension(Parameter):
     def __init__(self, name=None, start=None, end=None):
         super(Dimension, self).__init__(name)
-        self._start = start
-        self._end = end
-        self._step = 1
+        self._data['start'] = start
+        self._data['end'] = end
+        self._data['step'] = 1
 
     @property
     def start(self):
-        return self._start
+        return self._data['start']
 
     @property
     def end(self):
-        return self._end
+        return self._data['end']
 
     @property
     def step(self):
-        return self._step
-
-    @property
-    def json(self):
-        params = {
-            'start': self.start,
-            'end': self.end,
-            'step': self.step,
-        }
-        return params
-
-    @classmethod
-    def from_json(cls, data):
-        start = None
-        end = None
-        name = None
-
-        if 'start' in data:
-            uri = data['start']
-        else:
-            raise ParameterError('Variable must provide a start value.')
-
-        if 'end' in data:
-            uri = data['end']
-        else:
-            raise ParameterError('Variable must provide a end value.')
-        return cls(name=name, start=start, end=end)
+        return self._data['step']
 
     def __repr__(self):
         return "Dimension(name={}, start={}, end={})".format(
