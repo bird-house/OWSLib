@@ -11,8 +11,7 @@ def test_variable():
     assert variable.var_name == 'tas'
     assert variable.uri == 'http://data.demo/tas.nc'
     assert variable.id == 'tas|test'
-    assert variable.json['id'] == 'tas|test'
-    assert variable.json['uri'] == 'http://data.demo/tas.nc'
+    assert variable.json == {'name': 'test', 'uri': 'http://data.demo/tas.nc', 'var_name': 'tas', 'id': 'tas|test'}
     assert variable.value == '{"name": "test", "uri": "http://data.demo/tas.nc", "var_name": "tas", "id": "tas|test"}'
     assert variable.__repr__() == "Variable(name='test', uri='http://data.demo/tas.nc', var_name='tas')"
 
