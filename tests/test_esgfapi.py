@@ -33,7 +33,15 @@ def test_dimension():
     assert dimension.end == 806
     assert dimension.json == {'end': 806, 'name': 'time', 'start': 227, 'step': 1}
     dimension = Dimension('lat', 0, 90)
+    assert dimension.name == 'lat'
+    assert dimension.start == 0
+    assert dimension.end == 90
+    assert dimension.json == {'end': 90, 'name': 'lat', 'start': 0, 'step': 1}
     dimension = Dimension('lon', 180, 360)
+    assert dimension.name == 'lon'
+    assert dimension.start == 180
+    assert dimension.end == 360
+    assert dimension.json == {'end': 360, 'name': 'lon', 'start': 180, 'step': 1}
 
 
 def test_domain():
