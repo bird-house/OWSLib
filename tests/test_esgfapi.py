@@ -1,6 +1,7 @@
 import pytest
 
 from owslib.esgfapi import Variable
+from owslib.esgfapi import Domain
 from owslib.esgfapi import ParameterError
 
 
@@ -22,3 +23,7 @@ def test_variable_from_json():
     with pytest.raises(ParameterError):
         # id missing
         Variable.from_json({"uri": "http://data.demo/tas.nc"})
+
+
+def test_domain():
+    domain = Domain(name='test')

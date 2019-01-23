@@ -87,4 +87,24 @@ class Variable(Parameter):
         return cls(uri=uri, var_name=var_name, name=name)
 
     def __repr__(self):
-        return ('Variable(name=%r, uri=%r, var_name=%r)' % (self.name, self.uri, self.var_name))
+        return "Variable(name='{}', uri='{}', var_name='{}')".format(
+            self.name, self.uri, self.var_name)
+
+
+class Domain(Parameter):
+    def __init__(self, dimensions=None, mask=None, name=None):
+        super(Domain, self).__init__(name)
+        self._dimensions = dimensions or []
+        self._mask = mask
+
+    @property
+    def dimensions(self):
+        return self._dimensions
+
+    @property
+    def mask(self):
+        return self._mask
+
+    def __repr__(self):
+        return "Domain(dimensions='{}', mask='{}', name='{}')".format(
+            self.dimensions, self.mask, self.name)
