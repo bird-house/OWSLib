@@ -39,6 +39,12 @@ class Parameter(ComplexDataInput):
         if value:
             self.from_json(json.loads(value))
 
+    def __repr__(self):
+        params = ''
+        for key in self._data:
+            params += "{}='{}', ".format(key, self._data[key])
+        return "{}({})".format(self.__class__.__name__, params.strip(', '))
+
 
 class Variable(Parameter):
     def __init__(self, uri, var_name=None, id=None, name=None):
@@ -73,10 +79,6 @@ class Variable(Parameter):
     def uri(self):
         return self._data['uri']
 
-    def __repr__(self):
-        return "Variable(name='{}', uri='{}', var_name='{}')".format(
-            self.name, self.uri, self.var_name)
-
 
 class Dimension(Parameter):
     def __init__(self, name=None, start=None, end=None):
@@ -97,12 +99,6 @@ class Dimension(Parameter):
     def step(self):
         return self._data['step']
 
-    def __repr__(self):
-        return "Dimension(name={}, start={}, end={})".format(
-            self.name,
-            self.start,
-            self.end)
-
 
 class Domain(Parameter):
     def __init__(self, dimensions=None, mask=None, name=None):
@@ -117,7 +113,3 @@ class Domain(Parameter):
     @property
     def mask(self):
         return self._mask
-
-    def __repr__(self):
-        return "Domain(dimensions='{}', mask='{}', name='{}')".format(
-            self.dimensions, self.mask, self.name)
