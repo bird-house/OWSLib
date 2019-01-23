@@ -16,10 +16,7 @@ class Parameter(ComplexDataInput):
             encoding=None,
             schema=None)
         self._name = name or uuid1().hex
-
-    @classmethod
-    def from_json(cls, data):
-        raise NotImplementedError
+        self._data = {}
 
     @property
     def name(self):
@@ -27,7 +24,11 @@ class Parameter(ComplexDataInput):
 
     @property
     def json(self):
-        raise NotImplementedError
+        return self._data
+
+    @classmethod
+    def from_json(cls, data):
+        return cls(**data)
 
     @property
     def value(self):
@@ -40,51 +41,37 @@ class Parameter(ComplexDataInput):
 
 
 class Variable(Parameter):
-    def __init__(self, uri, var_name, name=None):
+    def __init__(self, uri, var_name=None, id=None, name=None):
         super(Variable, self).__init__(name)
-        self._uri = uri
-        self._var_name = var_name
+        self._data['uri'] = uri
+
+        if id:
+            self._data['id'] = id
+            if '|' in id:
+                var_name, name = id.split('|')
+            else:
+                raise ParameterError('Variable id must contain a variable name and id.')
+        if var_name:
+            self._data['var_name'] = var_name
+            if not id:
+                self._data['id'] = '{}|{}'.format(var_name, self.name)
+
+        if 'id' not in self._data:
+            raise ParameterError('Variable must have an id.')
+        if 'var_name' not in self._data:
+            raise ParameterError('Variable must have a var_name.')
+
+    @property
+    def id(self):
+        return self._data['id']
 
     @property
     def var_name(self):
-        return self._var_name
+        return self._data['var_name']
 
     @property
     def uri(self):
-        return self._uri
-
-    @property
-    def json(self):
-        params = {
-            'uri': self.uri,
-            'id': self.var_name,
-        }
-        if self.var_name:
-            params['id'] = '{}|{}'.format(params['id'], self.name)
-        return params
-
-    @classmethod
-    def from_json(cls, data):
-        uri = None
-        id = None
-
-        if 'uri' in data:
-            uri = data['uri']
-        else:
-            raise ParameterError('Variable must provide a uri.')
-
-        name = None
-        var_name = None
-
-        if 'id' in data:
-            if '|' in data['id']:
-                var_name, name = data['id'].split('|')
-            else:
-                raise ParameterError('Variable id must contain a variable name and id.')
-        else:
-            raise ParameterError('Variable must provide an id.')
-
-        return cls(uri=uri, var_name=var_name, name=name)
+        return self._data['uri']
 
     def __repr__(self):
         return "Variable(name='{}', uri='{}', var_name='{}')".format(
