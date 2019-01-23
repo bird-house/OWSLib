@@ -81,11 +81,12 @@ class Variable(Parameter):
 
 
 class Dimension(Parameter):
-    def __init__(self, name=None, start=None, end=None):
+    def __init__(self, name=None, start=None, end=None, step=1, crs="values"):
         super(Dimension, self).__init__(name)
         self._data['start'] = start
         self._data['end'] = end
-        self._data['step'] = 1
+        self._data['step'] = step
+        self._data['crs'] = crs
 
     @property
     def start(self):
@@ -99,12 +100,23 @@ class Dimension(Parameter):
     def step(self):
         return self._data['step']
 
+    @property
+    def crs(self):
+        return self._data['crs']
+
+    @crs.setter
+    def crs(self, value):
+        if value in ["values", "indices"]:
+            self._data['crs'] = value
+        else:
+            raise ValueError
+
 
 class Domain(Parameter):
     def __init__(self, dimensions=None, mask=None, name=None):
         super(Domain, self).__init__(name)
         if dimensions:
-            self._data['dimensions'] = [dim.json for dim in dimensions]
+            self._data['dimensions'] = [dim.json if isinstance(dim, Dimension) else dim for dim in dimensions]
         else:
             self._data['dimensions'] = []
         self._data['mask'] = mask
