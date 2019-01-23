@@ -96,6 +96,7 @@ class Dimension(Parameter):
         super(Dimension, self).__init__(name)
         self._start = start
         self._end = end
+        self._step = 1
 
     @property
     def start(self):
@@ -104,6 +105,36 @@ class Dimension(Parameter):
     @property
     def end(self):
         return self._end
+
+    @property
+    def step(self):
+        return self._step
+
+    @property
+    def json(self):
+        params = {
+            'start': self.start,
+            'end': self.end,
+            'step': self.step,
+        }
+        return params
+
+    @classmethod
+    def from_json(cls, data):
+        start = None
+        end = None
+        name = None
+
+        if 'start' in data:
+            uri = data['start']
+        else:
+            raise ParameterError('Variable must provide a start value.')
+
+        if 'end' in data:
+            uri = data['end']
+        else:
+            raise ParameterError('Variable must provide a end value.')
+        return cls(name=name, start=start, end=end)
 
     def __repr__(self):
         return "Dimension(name={}, start={}, end={})".format(
