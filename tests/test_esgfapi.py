@@ -2,6 +2,7 @@ import pytest
 
 from owslib.esgfapi import Variable
 from owslib.esgfapi import Domain
+from owslib.esgfapi import Dimension
 from owslib.esgfapi import ParameterError
 
 
@@ -23,6 +24,12 @@ def test_variable_from_json():
     with pytest.raises(ParameterError):
         # id missing
         Variable.from_json({"uri": "http://data.demo/tas.nc"})
+
+
+def test_dimension():
+    dimension = Dimension('time', 227, 806)
+    dimension = Dimension('lat', 0, 90)
+    dimension = Dimension('lon', 180, 360)
 
 
 def test_domain():

@@ -91,6 +91,27 @@ class Variable(Parameter):
             self.name, self.uri, self.var_name)
 
 
+class Dimension(Parameter):
+    def __init__(self, name=None, start=None, end=None):
+        super(Dimension, self).__init__(name)
+        self._start = start
+        self._end = end
+
+    @property
+    def start(self):
+        return self._start
+
+    @property
+    def end(self):
+        return self._end
+
+    def __repr__(self):
+        return "Dimension(name={}, start={}, end={})".format(
+            self.name,
+            self.start,
+            self.end)
+
+
 class Domain(Parameter):
     def __init__(self, dimensions=None, mask=None, name=None):
         super(Domain, self).__init__(name)
