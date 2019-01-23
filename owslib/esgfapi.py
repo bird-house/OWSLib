@@ -103,13 +103,16 @@ class Dimension(Parameter):
 class Domain(Parameter):
     def __init__(self, dimensions=None, mask=None, name=None):
         super(Domain, self).__init__(name)
-        self._dimensions = dimensions or []
-        self._mask = mask
+        if dimensions:
+            self._data['dimensions'] = [dim.json for dim in dimensions]
+        else:
+            self._data['dimensions'] = []
+        self._data['mask'] = mask
 
     @property
     def dimensions(self):
-        return self._dimensions
+        return self._data['dimensions']
 
     @property
     def mask(self):
-        return self._mask
+        return self._data['mask']
