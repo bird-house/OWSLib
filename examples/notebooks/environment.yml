@@ -13,5 +13,12 @@ dependencies:
   - requests
   - pyproj
   - lxml
+  # birdy
+  - click
+  - jinja2
+  - wrapt
+  - funcsigs
+  - boltons
   - pip:
     - -e git+https://github.com/bird-house/OWSLib.git@esgfwps#egg=owslib
+    # - -e git+https://github.com/bird-house/birdy.git@master#egg=birdy
